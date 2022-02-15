@@ -1,21 +1,36 @@
 package net.yoruniii.playdate;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.Material;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.mob.ZombieEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemUsage;
+import net.minecraft.item.Items;
 import net.minecraft.sound.BlockSoundGroup;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
+import net.minecraft.stat.Stats;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.TypedActionResult;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.RaycastContext;
+import net.minecraft.world.World;
 import net.yoruniii.playdate.block.ModBlocks;
 import net.yoruniii.playdate.block.custom.*;
 import net.yoruniii.playdate.block.custom.plush.*;
@@ -26,6 +41,7 @@ import net.yoruniii.playdate.entity.PetuniaPigEntity;
 import net.yoruniii.playdate.item.ModGroup;
 import net.yoruniii.playdate.item.ModItems;
 import net.yoruniii.playdate.item.custom.*;
+import net.yoruniii.playdate.mixin.ItemAccessor;
 import net.yoruniii.playdate.painting.ModPaintings;
 import software.bernie.geckolib3.GeckoLib;
 
@@ -167,6 +183,26 @@ public class Playdate implements ModInitializer {
 		ModPaintings.registerPaintings();
 
 		ModItems.registerModItems();
+
+		UseItemCallback.EVENT.register((player, world, hand) -> {
+			ItemStack stack = player.getStackInHand(hand);
+			if (stack.isOf(Items.GLASS_BOTTLE)) {
+				HitResult result = ItemAccessor.invokeRaycast(world, player, RaycastContext.FluidHandling.SOURCE_ONLY);
+
+				if (result.getType().equals(HitResult.Type.BLOCK) && result instanceof BlockHitResult blockResult) {
+					var blockPos = blockResult.getBlockPos();
+					if (world.getBlockState(blockPos).isOf(Blocks.SOUL_SAND)) {
+						world.playSound(player, player.getX(), player.getY(), player.getZ(), SoundEvents.BLOCK_SOUL_SAND_BREAK, SoundCategory.NEUTRAL, 1, 1);
+						world.setBlockState(blockPos, Blocks.SOUL_SOIL.getDefaultState());
+						world.playSound(player, blockPos, SoundEvents.AMBIENT_SOUL_SAND_VALLEY_ADDITIONS, SoundCategory.NEUTRAL, 1, 1);
+						player.incrementStat(Stats.USED.getOrCreateStat(stack.getItem()));
+						return TypedActionResult.success(ItemUsage.exchangeStack(stack, player, new ItemStack(ModItems.BOTTLED_SOUL)));
+					}
+				}
+			}
+
+			return TypedActionResult.pass(stack);
+		});
 
 	}
 }
