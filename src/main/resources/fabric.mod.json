@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "playdate",
+  "version": "1.0.0",
+
+  "name": "Playdate",
+  "description": "Playdate mod made for j_rey_rodriguez on Fiverr",
+  "authors": [
+    "Yoruniii"
+  ],
+  "contact": {
+    "homepage": "",
+    "sources": ""
+  },
+
+  "license": "CC0-1.0",
+  "icon": "assets/playdate/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "net.yoruniii.playdate.Playdate"
+    ],
+    "client": [
+      "net.yoruniii.playdate.PlaydateClient"
+    ]
+  },
+  "mixins": [
+    "playdate.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.11.3",
+    "fabric": "*",
+    "minecraft": "1.18.x",
+    "java": ">=17"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}
