@@ -39,7 +39,7 @@ public class LollipopClownToy extends BlockWithEntity{
 
     public VoxelShape makeShape(){
         VoxelShape shape = VoxelShapes.empty();
-        shape = VoxelShapes.union(shape, VoxelShapes.cuboid(0.25, 0, 0.25, 0.75, 2.5, 0.75));
+        shape = VoxelShapes.union(shape, VoxelShapes.cuboid(0.15, 0, 0.15, 0.95, 2.5, 0.95));
 
         return shape;
     }

@@ -5,6 +5,10 @@
     32,
     32
   ],
+  "textures": {
+    "0": "playdate:block/zombie_plush",
+    "particle": "playdate:block/zombie_plush"
+  },
   "display": {
     "thirdperson_righthand": {
       "scale": [

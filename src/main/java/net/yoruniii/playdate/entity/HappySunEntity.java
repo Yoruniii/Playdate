@@ -1,12 +1,20 @@
 package net.yoruniii.playdate.entity;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.ai.brain.*;
+import net.minecraft.entity.ai.brain.task.OpenDoorsTask;
+import net.minecraft.entity.ai.brain.task.VillagerTaskListProvider;
 import net.minecraft.entity.ai.goal.*;
 import net.minecraft.entity.ai.pathing.MobNavigation;
 import net.minecraft.entity.mob.HostileEntity;
+import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.village.VillagerProfession;
 import net.minecraft.world.World;
 import net.yoruniii.playdate.Playdate;
 import net.yoruniii.playdate.block.ModBlocks;
@@ -29,28 +37,16 @@ public class HappySunEntity extends HostileEntity implements IAnimatable {
         this.ignoreCameraFrustum = true;
     }
 
-
     protected void initGoals() {
-        this.goalSelector.add(8, new LookAtEntityGoal(this, PlayerEntity.class, 8.0F));
-        this.goalSelector.add(8, new LookAroundGoal(this));
-        this.goalSelector.add(8, new DoorInteractGoal(this) {
-            @Override
-            protected boolean isDoorOpen() {
-                return super.isDoorOpen();
-            }
-        });
+        this.goalSelector.add(6, new LookAtEntityGoal(this, PlayerEntity.class, 8.0F));
+        this.goalSelector.add(5, new LookAroundGoal(this));
         this.initCustomGoals();
     }
 
     protected void initCustomGoals() {
         this.goalSelector.add(2, new AttackGoal(this));
-        this.goalSelector.add(6, new MoveThroughVillageGoal(this, 1.0D, true, 4, this::canBreakDoors));
         this.goalSelector.add(7, new WanderAroundFarGoal(this, 1.0D));
         this.targetSelector.add(2, new ActiveTargetGoal(this, PlayerEntity.class, true));
-    }
-
-    public boolean canBreakDoors() {
-        return true;
     }
 
     private <E extends IAnimatable> PlayState predicate(AnimationEvent<E> event)

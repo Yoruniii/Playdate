@@ -83,9 +83,9 @@ public class PetuniaPigToy extends BlockWithEntity{
         boolean possessed = state.get(POSSESSED);
         if(item.getItem() == ModItems.BOTTLED_SOUL && !possessed)
         {
-            ItemUsage.exchangeStack(item, player, new ItemStack(Items.GLASS_BOTTLE));
+            ItemUsage.consumeHeldItem(world, player, hand);
+            player.giveItemStack(new ItemStack(Items.GLASS_BOTTLE));
             world.setBlockState(pos, state.with(POSSESSED, true));
-
         }
         return ActionResult.CONSUME;
     }

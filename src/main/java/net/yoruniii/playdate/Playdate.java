@@ -1,21 +1,36 @@
 package net.yoruniii.playdate;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.Material;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.mob.ZombieEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemUsage;
+import net.minecraft.item.Items;
 import net.minecraft.sound.BlockSoundGroup;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
+import net.minecraft.stat.Stats;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.TypedActionResult;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.RaycastContext;
+import net.minecraft.world.World;
 import net.yoruniii.playdate.block.ModBlocks;
 import net.yoruniii.playdate.block.custom.*;
 import net.yoruniii.playdate.block.custom.plush.*;
@@ -26,6 +41,7 @@ import net.yoruniii.playdate.entity.PetuniaPigEntity;
 import net.yoruniii.playdate.item.ModGroup;
 import net.yoruniii.playdate.item.ModItems;
 import net.yoruniii.playdate.item.custom.*;
+import net.yoruniii.playdate.mixin.ItemAccessor;
 import net.yoruniii.playdate.painting.ModPaintings;
 import software.bernie.geckolib3.GeckoLib;
 
@@ -41,15 +57,15 @@ public class Playdate implements ModInitializer {
 	public static final EntityType<HappySunEntity> HAPPY_SUN = Registry.register(
 			Registry.ENTITY_TYPE,
 			new Identifier(MOD_ID, "happy_sun"),
-			FabricEntityTypeBuilder.create(SpawnGroup.MONSTER, HappySunEntity::new).dimensions(EntityDimensions.fixed(0.85f, 0.95f)).build());
+			FabricEntityTypeBuilder.create(SpawnGroup.MONSTER, HappySunEntity::new).dimensions(EntityDimensions.fixed(0.85f, 1.95f)).build());
 
 	public static final EntityType<LollipopClownEntity> LOLLIPOP_CLOWN = Registry.register(
 			Registry.ENTITY_TYPE,
 			new Identifier(MOD_ID, "lollipop_clown"),
-			FabricEntityTypeBuilder.create(SpawnGroup.MONSTER, LollipopClownEntity::new).dimensions(EntityDimensions.fixed(0.95f, 2.95f)).build());
+			FabricEntityTypeBuilder.create(SpawnGroup.MONSTER, LollipopClownEntity::new).dimensions(EntityDimensions.fixed(1.25f, 2.95f)).build());
 
 	public static BlockEntityType<PetuniaPigToyEntity> PETUNIA_PIG_TOY_ENTITY;
-	public static final PetuniaPigToy PETUNIA_PIG_TOY = new PetuniaPigToy(FabricBlockSettings.of(Material.WOOL).strength(0.4f).sounds(BlockSoundGroup.WOOL).breakByHand(true));
+	public static final PetuniaPigToy PETUNIA_PIG_TOY = new PetuniaPigToy(FabricBlockSettings.of(Material.STONE).strength(0.4f).sounds(BlockSoundGroup.STONE).breakByHand(true));
 	public static final PetuniaPigToyBlockItem PETUNIA_PIG_TOY_BLOCK_ITEM = new PetuniaPigToyBlockItem(PETUNIA_PIG_TOY, new FabricItemSettings().group(ModGroup.PLAYDATE_GROUP));
 
 	public static BlockEntityType<HappySunToyEntity> HAPPY_SUN_TOY_ENTITY;
@@ -152,21 +168,41 @@ public class Playdate implements ModInitializer {
 		Registry.register(Registry.BLOCK, new Identifier("playdate:petunia_pig_toy"), PETUNIA_PIG_TOY);
 		Registry.register(Registry.ITEM, new Identifier("playdate:petunia_pig_toy"), PETUNIA_PIG_TOY_BLOCK_ITEM);
 		PETUNIA_PIG_TOY_ENTITY = Registry.register(Registry.BLOCK_ENTITY_TYPE, "playdate:petunia_pig_toy_entity", FabricBlockEntityTypeBuilder.create(PetuniaPigToyEntity::new, PETUNIA_PIG_TOY).build(null));
-		FabricDefaultAttributeRegistry.register(PETUNIA_PIG, PetuniaPigEntity.createHostileAttributes().add(EntityAttributes.GENERIC_MAX_HEALTH, 60).add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 4).add(EntityAttributes.GENERIC_FOLLOW_RANGE, 50).add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.17));
+		FabricDefaultAttributeRegistry.register(PETUNIA_PIG, PetuniaPigEntity.createHostileAttributes().add(EntityAttributes.GENERIC_MAX_HEALTH, 60).add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 4).add(EntityAttributes.GENERIC_FOLLOW_RANGE, 60).add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.27));
 
 		Registry.register(Registry.BLOCK, new Identifier("playdate:happy_sun_toy"), HAPPY_SUN_TOY);
 		Registry.register(Registry.ITEM, new Identifier("playdate:happy_sun_toy"), HAPPY_SUN_TOY_BLOCK_ITEM);
 		HAPPY_SUN_TOY_ENTITY = Registry.register(Registry.BLOCK_ENTITY_TYPE, "playdate:happy_sun_toy_entity", FabricBlockEntityTypeBuilder.create(HappySunToyEntity::new, HAPPY_SUN_TOY).build(null));
-		FabricDefaultAttributeRegistry.register(HAPPY_SUN, HappySunEntity.createHostileAttributes().add(EntityAttributes.GENERIC_MAX_HEALTH, 100).add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 8).add(EntityAttributes.GENERIC_FOLLOW_RANGE, 50).add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.17));
+		FabricDefaultAttributeRegistry.register(HAPPY_SUN, HappySunEntity.createHostileAttributes().add(EntityAttributes.GENERIC_MAX_HEALTH, 100).add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 8).add(EntityAttributes.GENERIC_FOLLOW_RANGE, 60).add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.3));
 
 		Registry.register(Registry.BLOCK, new Identifier("playdate:lollipop_clown_toy"), LOLLIPOP_CLOWN_TOY);
 		Registry.register(Registry.ITEM, new Identifier("playdate:lollipop_clown_toy"), LOLLIPOP_CLOWN_TOY_BLOCK_ITEM);
 		LOLLIPOP_CLOWN_TOY_ENTITY = Registry.register(Registry.BLOCK_ENTITY_TYPE, "playdate:lollipop_clown_toy_entity", FabricBlockEntityTypeBuilder.create(LollipopClownToyEntity::new, LOLLIPOP_CLOWN_TOY).build(null));
-		FabricDefaultAttributeRegistry.register(LOLLIPOP_CLOWN, LollipopClownEntity.createHostileAttributes().add(EntityAttributes.GENERIC_MAX_HEALTH, 80).add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 6).add(EntityAttributes.GENERIC_FOLLOW_RANGE, 50).add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.185));
+		FabricDefaultAttributeRegistry.register(LOLLIPOP_CLOWN, LollipopClownEntity.createHostileAttributes().add(EntityAttributes.GENERIC_MAX_HEALTH, 80).add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 6).add(EntityAttributes.GENERIC_FOLLOW_RANGE, 60).add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.325));
 
 		ModPaintings.registerPaintings();
 
 		ModItems.registerModItems();
+
+		UseItemCallback.EVENT.register((player, world, hand) -> {
+			ItemStack stack = player.getStackInHand(hand);
+			if (stack.isOf(Items.GLASS_BOTTLE)) {
+				HitResult result = ItemAccessor.invokeRaycast(world, player, RaycastContext.FluidHandling.SOURCE_ONLY);
+
+				if (result.getType().equals(HitResult.Type.BLOCK) && result instanceof BlockHitResult blockResult) {
+					var blockPos = blockResult.getBlockPos();
+					if (world.getBlockState(blockPos).isOf(Blocks.SOUL_SAND)) {
+						world.playSound(player, player.getX(), player.getY(), player.getZ(), SoundEvents.BLOCK_SOUL_SAND_BREAK, SoundCategory.NEUTRAL, 1, 1);
+						world.setBlockState(blockPos, Blocks.SOUL_SOIL.getDefaultState());
+						world.playSound(player, blockPos, SoundEvents.AMBIENT_SOUL_SAND_VALLEY_ADDITIONS, SoundCategory.NEUTRAL, 1, 1);
+						player.incrementStat(Stats.USED.getOrCreateStat(stack.getItem()));
+						return TypedActionResult.success(ItemUsage.exchangeStack(stack, player, new ItemStack(ModItems.BOTTLED_SOUL)));
+					}
+				}
+			}
+
+			return TypedActionResult.pass(stack);
+		});
 
 	}
 }
